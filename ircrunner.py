@@ -125,7 +125,7 @@ class IRCRunner:
 				self.sendline(b'AUTHENTICATE PLAIN')
 
 		if command == 'PING':
-			self.sendline(b"PONG " + params)
+			self.sendline(b'PONG ' + params)
 
 		if command == '433': # nick in use
 			self.irc_send_next_nick()
