@@ -1,6 +1,7 @@
 import logging
 _logger = logging.getLogger(__name__)
 
+import base64
 import socket
 import ssl
 import time
@@ -59,6 +60,14 @@ class IRCRunner:
 		_logger.info("Using nickname %s", nick)
 		self.sendline(b'NICK %s' % nick.encode('ascii'))
 
+	def irc_send_authenticate(self):
+		auth = base64.b64encode(b'%s\0%s\0%s' % (
+			self.get_config('sasl_username').encode('utf-8'),
+			self.get_config('sasl_username').encode('utf-8'),
+			self.get_config('sasl_password').encode('utf-8')
+		))
+		self.sendline(b'AUTHENTICATE %s' % (auth,))
+
 	def run(self):
 		_logger.info("IRCRunner running")
 
@@ -74,6 +83,7 @@ class IRCRunner:
 
 				_logger.debug("Connected")
 
+				self.sendline(b'CAP REQ :sasl')
 				self.irc_send_next_nick()
 				self.irc_send_user()
 
@@ -105,6 +115,15 @@ class IRCRunner:
 		if command.startswith('4') or command.startswith('5'):
 			_logger.warning("Server error: %s %s", command, params)
 
+		if command == 'AUTHENTICATE' and params.strip() == b'+':
+			self.irc_send_authenticate()
+
+		if command == 'CAP':
+			(client_id, reply) = params.split(maxsplit=1)
+			rs = reply.split()
+			if rs[0] == b'ACK' and rs[1] == b':sasl':
+				self.sendline(b'AUTHENTICATE PLAIN')
+
 		if command == 'PING':
 			self.sendline(b"PONG " + params)
 
@@ -117,3 +136,13 @@ class IRCRunner:
 
 		if command in ['376', '422']: # end of MOTD or no MOTD, we're connected
 			return
+
+		if command in ['900', '901']: # [SASL] logged in/out
+			return
+
+		if command == '903': # SASL successful
+			self.sendline(b'CAP END')
+
+		if command in ['904', '905']: # SASL failed
+			_logger.error("SASL authentication failed")
+			raise DisconnectAndRetry()
