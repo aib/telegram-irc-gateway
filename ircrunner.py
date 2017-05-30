@@ -3,8 +3,12 @@ _logger = logging.getLogger(__name__)
 
 import socket
 import ssl
+import time
 
 class NoNicksLeft(Exception):
+	pass
+
+class DisconnectAndRetry(Exception):
 	pass
 
 class IRCRunner:
@@ -59,22 +63,34 @@ class IRCRunner:
 		_logger.info("IRCRunner running")
 
 		while True:
-			ssl_context = ssl.SSLContext()
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			self.socket = ssl_context.wrap_socket(s)
+			try:
+				ssl_context = ssl.SSLContext()
+				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				self.socket = ssl_context.wrap_socket(s)
 
-			(server, port) = (self.get_config('server'), int(self.get_config('port')))
-			_logger.info("Connecting to %s:%d", server, port)
-			self.socket.connect((server, port))
+				(server, port) = (self.get_config('server'), int(self.get_config('port')))
+				_logger.info("Connecting to %s:%d", server, port)
+				self.socket.connect((server, port))
 
-			_logger.debug("Connected")
+				_logger.debug("Connected")
 
-			self.irc_send_next_nick()
-			self.irc_send_user()
+				self.irc_send_next_nick()
+				self.irc_send_user()
 
-			while True:
-				msg = self.recvline()
-				self.process_message(msg)
+				while True:
+					msg = self.recvline()
+					self.process_message(msg)
+
+			except DisconnectAndRetry:
+				self.socket.close()
+
+			except Exception as e:
+				_logger.error("Exception:", exc_info=e)
+				self.socket.close()
+
+			reconnect_delay = int(self.get_config('reconnect_delay'))
+			_logger.warn("Disconnected. Waiting %d seconds and trying again.", reconnect_delay)
+			time.sleep(reconnect_delay)
 
 	def process_message(self, message):
 		if message.startswith(b':'):
