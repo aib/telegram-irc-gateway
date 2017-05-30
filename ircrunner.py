@@ -23,6 +23,7 @@ class IRCRunner:
 		self.recv_buffer = b''
 		self.nicks = self.get_config('nicks').split()
 		self.nick_index = None
+		self.channels = self.get_config('channels').split()
 
 	def get_config(self, name, default=None):
 		return self.config.get(self.CONFIG_SECTION, name, fallback=default)
@@ -70,6 +71,8 @@ class IRCRunner:
 
 	def irc_start_session(self):
 		_logger.info("IRC session started")
+		for channel in self.channels:
+			self.sendline(b'JOIN %s' % (channel.encode('ascii')))
 
 	def run(self):
 		_logger.info("IRCRunner running")
