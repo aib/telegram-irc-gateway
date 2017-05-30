@@ -23,12 +23,10 @@ def makeRequest(token, func, params):
 
 	return json.loads(resp.read().decode('utf-8'))
 
-def getOneUpdate(token):
+def getOneUpdate(token, lastUpdateId=0):
 	while True:
-		updates = makeRequest(token, 'getUpdates', { 'limit': 1, 'offset': getOneUpdate.nextUpdateId, 'timeout': LONG_POLL_DURATION })
+		updates = makeRequest(token, 'getUpdates', { 'limit': 1, 'offset': lastUpdateId, 'timeout': LONG_POLL_DURATION })
 		results = updates['result']
 		if len(results) == 1:
 			result = results[0]
-			getOneUpdate.nextUpdateId = result['update_id'] + 1
 			return result
-getOneUpdate.nextUpdateId = 0
