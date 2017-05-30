@@ -68,6 +68,9 @@ class IRCRunner:
 		))
 		self.sendline(b'AUTHENTICATE %s' % (auth,))
 
+	def irc_start_session(self):
+		_logger.info("IRC session started")
+
 	def run(self):
 		_logger.info("IRCRunner running")
 
@@ -135,6 +138,7 @@ class IRCRunner:
 			return
 
 		if command in ['376', '422']: # end of MOTD or no MOTD, we're connected
+			self.irc_start_session()
 			return
 
 		if command in ['900', '901']: # [SASL] logged in/out
