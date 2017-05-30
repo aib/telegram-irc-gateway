@@ -8,6 +8,8 @@ class TGRunner:
 
 	def __init__(self, config):
 		self.config = config
+		self.groups = self.get_config('groups').split()
+		self.irc_messager = None
 
 	def get_config(self, name, default=None):
 		return self.config.get(self.CONFIG_SECTION, name, fallback=default)
@@ -15,6 +17,9 @@ class TGRunner:
 	def set_config(self, name, value):
 		self.config.set(self.CONFIG_SECTION, name, value)
 		self.config.save()
+
+	def set_irc_messager(self, irc_messager):
+		self.irc_messager = irc_messager
 
 	def send_message(self, message):
 		_logger.debug("-> sendMessage %s", message)
@@ -36,5 +41,8 @@ class TGRunner:
 			message = update['message']
 			chat = message['chat']
 
-			if chat['type'] == 'private':
-				self.send_message({ 'chat_id': chat['id'], 'text': message['text'] })
+			if chat['type'] in ['group', 'supergroup']:
+				if str(chat['id']) in self.groups:
+					if self.irc_messager is not None:
+						msg = "<%s@tg> %s" % (message['from']['username'], message['text'])
+						self.irc_messager(msg)
