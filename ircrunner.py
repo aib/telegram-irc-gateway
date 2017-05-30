@@ -24,6 +24,7 @@ class IRCRunner:
 		self.nicks = self.get_config('nicks').split()
 		self.nick_index = None
 		self.channels = self.get_config('channels').split()
+		self.telegram_messager = None
 
 	def get_config(self, name, default=None):
 		return self.config.get(self.CONFIG_SECTION, name, fallback=default)
@@ -31,6 +32,9 @@ class IRCRunner:
 	def set_config(self, name, value):
 		self.config.set(self.CONFIG_SECTION, name, value)
 		self.config.save()
+
+	def set_telegram_messager(self, telegram_messager):
+		self.telegram_messager = telegram_messager
 
 	def recvline(self):
 		while b'\n' not in self.recv_buffer:
@@ -132,6 +136,15 @@ class IRCRunner:
 
 		if command == 'PING':
 			self.sendline(b'PONG ' + params)
+
+		if command == 'PRIVMSG':
+			(target, msg) = params.split(maxsplit=1)
+			if target.decode('ascii') in self.channels:
+				if self.telegram_messager is not None:
+					msg = msg[1:].decode('utf-8', errors='replace')
+					nick = prefix[1:].split('!', 1)[0]
+					message = "<%s@irc> %s" % (nick, msg)
+					self.telegram_messager(message)
 
 		if command == '433': # nick in use
 			self.irc_send_next_nick()
