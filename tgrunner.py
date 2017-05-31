@@ -31,14 +31,13 @@ class TGRunner:
 
 	def run(self):
 		_logger.info("TGRunner running, bot token is %s", self.get_config('token'))
+		last_update_id = 0
 		while True:
-			last_update_id = int(self.get_config('last_update_id', 0))
 			_logger.debug("Looking for updates >= %d", last_update_id)
 			update = telegram.getOneUpdate(self.get_config('token'), last_update_id)
 			_logger.debug("<- %s", update)
 			last_update_id = update['update_id'] + 1
 			self.process_update(update)
-			self.set_config('last_update_id', str(last_update_id))
 
 	def process_update(self, update):
 		if 'message' in update:
