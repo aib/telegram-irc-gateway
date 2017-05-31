@@ -91,12 +91,13 @@ class IRCRunner:
 
 		while True:
 			try:
-				ssl_context = ssl.SSLContext()
-				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				self.socket = ssl_context.wrap_socket(s)
+				ssl_context = ssl.create_default_context()
 
 				(server, port) = (self.get_config('server'), int(self.get_config('port')))
 				_logger.info("Connecting to %s:%d", server, port)
+
+				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				self.socket = ssl_context.wrap_socket(s, server_hostname=server)
 				self.socket.connect((server, port))
 
 				_logger.debug("Connected")
