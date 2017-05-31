@@ -20,6 +20,8 @@ class MyConfigParser(configparser.ConfigParser):
 
 	def save(self):
 		_logger.debug("Saving configuration")
+		with open(self._filename, 'w') as f:
+			self.write(f)
 
 def main():
 	conf = MyConfigParser('config.cfg')
