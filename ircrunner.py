@@ -48,6 +48,10 @@ class IRCRunner:
 		_logger.debug("-> %s", line)
 		self.socket.send(line + b'\n')
 
+	def forward_message(self, message):
+		for channel in self.channels:
+			self.sendline(b'PRIVMSG %s :%s' % (channel.encode('ascii'), message.encode('utf-8')))
+
 	def irc_send_user(self):
 		self.sendline(b'USER %s %s %s :%s' %
 			(self.get_config('username').encode('ascii'), self.HOSTNAME, self.SERVERNAME, self.get_config('realname').encode('ascii')))
