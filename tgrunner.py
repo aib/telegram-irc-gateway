@@ -38,6 +38,7 @@ class TGRunner:
 			_logger.debug("<- %s", update)
 			last_update_id = update['update_id'] + 1
 			self.process_update(update)
+			self.set_config('last_update_id', str(last_update_id))
 
 	def process_update(self, update):
 		if 'message' in update:
