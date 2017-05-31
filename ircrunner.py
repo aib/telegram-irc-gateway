@@ -4,6 +4,7 @@ _logger = logging.getLogger(__name__)
 import base64
 import socket
 import ssl
+import threading
 import time
 
 class NoNicksLeft(Exception):
@@ -25,6 +26,7 @@ class IRCRunner:
 		self.nick_index = None
 		self.channels = self.get_config('channels').split()
 		self.telegram_messager = None
+		self.irc_ready = threading.Event()
 
 	def get_config(self, name, default=None):
 		return self.config.get(self.CONFIG_SECTION, name, fallback=default)
@@ -49,6 +51,7 @@ class IRCRunner:
 		self.socket.send(line + b'\n')
 
 	def forward_message(self, message):
+		self.irc_ready.wait()
 		for channel in self.channels:
 			self.sendline(b'PRIVMSG %s :%s' % (channel.encode('ascii'), message.encode('utf-8')))
 
@@ -78,6 +81,7 @@ class IRCRunner:
 		self.sendline(b'AUTHENTICATE %s' % (auth,))
 
 	def irc_start_session(self):
+		self.irc_ready.set()
 		_logger.info("IRC session started")
 		for channel in self.channels:
 			self.sendline(b'JOIN %s' % (channel.encode('ascii')))
@@ -112,6 +116,7 @@ class IRCRunner:
 				_logger.error("Exception:", exc_info=e)
 				self.socket.close()
 
+			self.irc_ready.clear()
 			reconnect_delay = int(self.get_config('reconnect_delay'))
 			_logger.warn("Disconnected. Waiting %d seconds and trying again.", reconnect_delay)
 			time.sleep(reconnect_delay)
