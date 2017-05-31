@@ -25,6 +25,10 @@ class TGRunner:
 		_logger.debug("-> sendMessage %s", message)
 		telegram.makeRequest(self.get_config('token'), 'sendMessage', message)
 
+	def forward_message(self, message):
+		for group in self.groups:
+			self.send_message({ 'chat_id': int(group), 'text': message })
+
 	def run(self):
 		_logger.info("TGRunner running, bot token is %s", self.get_config('token'))
 		while True:
