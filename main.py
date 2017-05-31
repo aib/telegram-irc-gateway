@@ -11,6 +11,8 @@ import time
 import ircrunner
 import tgrunner
 
+DEFAULT_CONFIG_FILENAME = 'gateway.conf'
+
 class MyConfigParser(configparser.ConfigParser):
 	def __init__(self, filename, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -24,7 +26,7 @@ class MyConfigParser(configparser.ConfigParser):
 			self.write(f)
 
 def main():
-	conf = MyConfigParser('config.cfg')
+	conf = MyConfigParser(DEFAULT_CONFIG_FILENAME)
 	tgr = tgrunner.TGRunner(conf)
 	ircr = ircrunner.IRCRunner(conf)
 
