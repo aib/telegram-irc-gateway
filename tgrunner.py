@@ -47,7 +47,8 @@ class TGRunner:
 			if chat['type'] in ['group', 'supergroup']:
 				if str(chat['id']) in self.groups:
 					if self.irc_messager is not None:
-						for line in message['text'].split('\n'):
-							if len(line.strip()) > 0:
-								msg = "<%s@tg> %s" % (message['from']['username'], line)
-								self.irc_messager(msg)
+						if 'text' in message:
+							for line in message['text'].split('\n'):
+								if len(line.strip()) > 0:
+									msg = "<%s@tg> %s" % (message['from']['username'], line)
+									self.irc_messager(msg)
